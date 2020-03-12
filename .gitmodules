@@ -1,0 +1,16 @@
+[submodule "fe-terrain/vendor/glad"]
+	path = fe-terrain/vendor/glad
+	url = https://github.com/Dav1dde/glad.git
+	branch = c
+[submodule "fe-terrain/vendor/glfw"]
+	path = fe-terrain/vendor/glfw
+	url = https://github.com/glfw/glfw.git
+	branch = master
+[submodule "fe-terrain/vendor/glm"]
+	path = fe-terrain/vendor/glm
+	url = https://github.com/g-truc/glm.git
+	branch = master
+[submodule "fe-terrain/vendor/stb"]
+	path = fe-terrain/vendor/stb
+	url = https://github.com/nothings/stb.git
+	branch = master
