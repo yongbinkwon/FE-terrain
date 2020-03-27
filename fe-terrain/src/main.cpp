@@ -1,5 +1,5 @@
 // Local headers
-#include "gloom/gloom.hpp"
+#include "util/window.hpp"
 #include "program.hpp"
 
 // System headers
@@ -8,6 +8,8 @@
 
 // Standard headers
 #include <cstdlib>
+
+#include <iostream>
 
 
 // A callback which allows GLFW to report errors whenever they occur
@@ -55,6 +57,8 @@ GLFWwindow* initialise()
 
     // Let the window be the current OpenGL context and initialise glad
     glfwMakeContextCurrent(window);
+	glfwSetCursorPosCallback(window, mouse_callback);
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     gladLoadGL();
 
     // Print various OpenGL information to stdout
@@ -71,9 +75,12 @@ int main(int argc, char* argb[])
 {
     // Initialise window using GLFW
     GLFWwindow* window = initialise();
-
-    // Run an OpenGL application using this window
+	
+	//std::cout << GL_TEXTURE1 << "	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
+    
+	// Run an OpenGL application using this window
     runProgram(window);
+	
 
     // Terminate GLFW (no need to call glfwDestroyWindow)
     glfwTerminate();

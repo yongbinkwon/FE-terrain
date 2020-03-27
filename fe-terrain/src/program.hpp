@@ -16,6 +16,8 @@ void runProgram(GLFWwindow* window);
 // Function for handling keypresses
 void handleKeyboardInput(GLFWwindow* window);
 
+void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+
 
 // Checks for whether an OpenGL error occurred. If one did,
 // it prints out the error type and ID
