@@ -7,4 +7,6 @@ struct HeightMap{
 	std::vector<unsigned int> indices;
 };
 
-HeightMap generatePerlinNoiseMap(unsigned int width, unsigned int height, GLfloat unitsize);
+std::vector<unsigned char> noiseMap(unsigned int seed);
+
+HeightMap generatePerlinNoiseMap(unsigned int width, unsigned int height, GLfloat unitsize, unsigned int seed);

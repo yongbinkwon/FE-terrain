@@ -14,12 +14,14 @@
 #include <glm/gtx/transform.hpp>
 
 #include <iostream>
+#include <cstdlib>
+#include <ctime>
 
 
 Shading::Shader* shader;
 //MAP DIMENSIONS
-unsigned int width = 100;
-unsigned int height = 100;
+unsigned int width = 128;
+unsigned int height = 128;
 GLfloat unitsize = 2.0f;
 //CAMERA
 glm::vec3 cameraPos   = glm::vec3((width/2)*unitsize, 30.0f,  0.0f);
@@ -37,6 +39,21 @@ unsigned int imageToTexture(PNGImage im) {
 	glGenTextures(1, &textureID);
 	glBindTexture(GL_TEXTURE_2D, textureID);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, im.width, im.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, im.pixels.data());
+	/*
+	int i = im.pixels.at(3);
+	std::cout << i << "AAAAAAAAAAA";
+	*/
+	glGenerateMipmap(GL_TEXTURE_2D);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	return textureID;
+}
+
+unsigned int noiseToTexture(std::vector<unsigned char> pixels, unsigned int width, unsigned int height) {
+	unsigned int textureID;
+	glGenTextures(1, &textureID);
+	glBindTexture(GL_TEXTURE_2D, textureID);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
 	glGenerateMipmap(GL_TEXTURE_2D);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -60,6 +77,8 @@ void runProgram(GLFWwindow* window)
     // Set default colour after clearing the colour buffer
     glClearColor(0.3f, 0.5f, 0.8f, 1.0f);
 	
+	//seeding based on time
+	std::srand(std::time(nullptr));
 
     // Set up your scene here (create Vertex Array Objects, etc.)
 	// Activate shader
@@ -71,24 +90,26 @@ void runProgram(GLFWwindow* window)
     glGenVertexArrays(1, &vaoID);
     glBindVertexArray(vaoID);
 	
-	HeightMap heightMap = generatePerlinNoiseMap(width, height, unitsize);
+	HeightMap heightMap = generatePerlinNoiseMap(width, height, unitsize, std::rand());
 	/*
 	std::vector<GLfloat> vertices = {-0.6f, -0.6f, 0.0f,
 									0.6f, -0.6f, 0.0f,
 									0.0f, 0.6f, 0.0f};
 	std::vector<GLuint> indices = {0, 1, 2};
 	*/
-	//xyzrgb
+	//xyzuvrgbst
 	unsigned int vboID;
 	glGenBuffers(1, &vboID);
 	glBindBuffer(GL_ARRAY_BUFFER, vboID);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)*heightMap.vertices.size(), heightMap.vertices.data(), GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8*sizeof(GL_FLOAT), (GLvoid*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 10*sizeof(GL_FLOAT), (GLvoid*)0);
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8*sizeof(GL_FLOAT), (GLvoid*)(3*sizeof(GL_FLOAT)));
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 10*sizeof(GL_FLOAT), (GLvoid*)(3*sizeof(GL_FLOAT)));
 	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8*sizeof(GL_FLOAT), (GLvoid*)(5*sizeof(GL_FLOAT)));
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 10*sizeof(GL_FLOAT), (GLvoid*)(5*sizeof(GL_FLOAT)));
 	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 10*sizeof(GL_FLOAT), (GLvoid*)(8*sizeof(GL_FLOAT)));
+	glEnableVertexAttribArray(3);
 	
 	unsigned int indexBufferID;
     glGenBuffers(1, &indexBufferID);
@@ -109,53 +130,8 @@ void runProgram(GLFWwindow* window)
 	PNGImage snowtex = loadPNGFile("../fe-terrain/textures/snowtex.png");
 	unsigned int snowtexID = imageToTexture(snowtex);
 	
-
-	
-	
-	/*
-	unsigned int plaintexID;
-	unsigned int mountexID;
-	unsigned int snowtexID;
-	glGenTextures(1, &plaintexID);
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, plaintexID);
-	PNGImage plaintex = loadPNGFile("../fe-terrain/textures/plaintex.png");
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, plaintex.width, plaintex.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, plaintex.pixels.data());
-	glUniform1i(glGetUniformLocation(shader->get(), "plaintextureSampler"), 0);
-	
-	glGenTextures(1, &mountexID);
-	glActiveTexture(GL_TEXTURE0+1);
-	glBindTexture(GL_TEXTURE_2D, mountexID);
-	PNGImage mountaintex = loadPNGFile("../fe-terrain/textures/mountaintex.png");
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, mountaintex.width, mountaintex.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, mountaintex.pixels.data());
-	glUniform1i(glGetUniformLocation(shader->get(), "mountaintextureSampler"), 1);
-	
-	glGenTextures(1, &snowtexID);
-	glActiveTexture(GL_TEXTURE0+2);
-	glBindTexture(GL_TEXTURE_2D, snowtexID);
-	PNGImage snowtex = loadPNGFile("../fe-terrain/textures/snowtex.png");
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, snowtex.width, snowtex.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, snowtex.pixels.data());
-	glUniform1i(glGetUniformLocation(shader->get(), "snowtextureSampler"), 2);
-	*/
-	
-	/*
-	plainTexLocation = glGetUniformLocation(shader->get(), "plaintextureSampler");
-	mountainTexLocation = glGetUniformLocation(shader->get(), "mountaintextureSampler");
-	snowTexLocation = glGetUniformLocation(shader->get(), "snowtextureSampler");
-	
-	glUniform1i(plainTexLocation, 0);
-	glUniform1i(mountainTexLocation, 1);
-	glUniform1i(snowTexLocation, 1);
-	
-	glActiveTexture(GL_TEXTURE0 + 0); // Texture unit 0
-	glBindTexture(GL_TEXTURE_2D, plaintexID);
-
-	glActiveTexture(GL_TEXTURE0 + 1); // Texture unit 1
-	glBindTexture(GL_TEXTURE_2D, mountaintexID);
-	
-	glActiveTexture(GL_TEXTURE0 + 2); // Texture unit 1
-	glBindTexture(GL_TEXTURE_2D, snowtexID);
-	*/
+	//noisetex
+	unsigned int noisetexID = noiseToTexture(noiseMap(std::rand()), 128, 128);
 	
 	
 	
@@ -164,6 +140,7 @@ void runProgram(GLFWwindow* window)
     // Rendering Loop
     while (!glfwWindowShouldClose(window))
     {
+		//std::cout << std::rand() << "AAAAAAAAAAAAAAAAAAA, ";
         // Clear colour and depth buffers
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -178,6 +155,7 @@ void runProgram(GLFWwindow* window)
 		glBindTextureUnit(0, plaintexID);
 		glBindTextureUnit(1, mountaintexID);
 		glBindTextureUnit(2, snowtexID);
+		glBindTextureUnit(3, noisetexID);
 		
 		glDrawElements(GL_TRIANGLES, heightMap.indices.size(), GL_UNSIGNED_INT, nullptr);
 		//glDrawArrays(GL_TRIANGLES, 0, 3);
