@@ -102,13 +102,13 @@ void runProgram(GLFWwindow* window)
 	glGenBuffers(1, &vboID);
 	glBindBuffer(GL_ARRAY_BUFFER, vboID);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)*heightMap.vertices.size(), heightMap.vertices.data(), GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 10*sizeof(GL_FLOAT), (GLvoid*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8*sizeof(GL_FLOAT)+sizeof(GL_UNSIGNED_INT), (GLvoid*)0);
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 10*sizeof(GL_FLOAT), (GLvoid*)(3*sizeof(GL_FLOAT)));
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8*sizeof(GL_FLOAT)+sizeof(GL_UNSIGNED_INT), (GLvoid*)(3*sizeof(GL_FLOAT)));
 	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 10*sizeof(GL_FLOAT), (GLvoid*)(5*sizeof(GL_FLOAT)));
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8*sizeof(GL_FLOAT)+sizeof(GL_UNSIGNED_INT), (GLvoid*)(5*sizeof(GL_FLOAT)));
 	glEnableVertexAttribArray(2);
-	glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 10*sizeof(GL_FLOAT), (GLvoid*)(8*sizeof(GL_FLOAT)));
+	glVertexAttribPointer(3, 1, GL_UNSIGNED_INT, GL_FALSE, 8*sizeof(GL_FLOAT)+sizeof(GL_UNSIGNED_INT), (GLvoid*)(8*sizeof(GL_FLOAT)));
 	glEnableVertexAttribArray(3);
 	
 	unsigned int indexBufferID;
@@ -118,20 +118,31 @@ void runProgram(GLFWwindow* window)
 	
 	
 	//textures
-	
+	/*
 	PNGImage plaintex = loadPNGFile("../fe-terrain/textures/plaintex.png");
 	unsigned int plaintexID = imageToTexture(plaintex);
 	
 	
-	PNGImage mountaintex = loadPNGFile("../fe-terrain/textures/mountaintex.png");
+	PNGImage mountaintex = loadPNGFile("../fe-terrain/textures/mountaintex3.png");
 	unsigned int mountaintexID = imageToTexture(mountaintex);
 	
 	
-	PNGImage snowtex = loadPNGFile("../fe-terrain/textures/snowtex.png");
+	PNGImage snowtex = loadPNGFile("../fe-terrain/textures/snow01.png");
 	unsigned int snowtexID = imageToTexture(snowtex);
+	*/
 	
 	//noisetex
-	unsigned int noisetexID = noiseToTexture(noiseMap(std::rand()), 128, 128);
+	unsigned int noisetexID1 = noiseToTexture(noiseMap(std::rand()), 128, 128);
+	unsigned int noisetexID2 = noiseToTexture(noiseMap(std::rand()), 128, 128);
+	unsigned int noisetexID3 = noiseToTexture(noiseMap(std::rand()), 128, 128);
+	
+	//lighting
+	shader.setVec3("light.direction", -0.2f, -1.0f, -0.3f); 	
+	shader.setVec3("light.ambient",  0.2f, 0.2f, 0.2f);
+	shader.setVec3("light.diffuse",  0.5f, 0.5f, 0.5f);
+	shader.setVec3("light.specular", 1.0f, 1.0f, 1.0f); 
+	
+	
 	
 	
 	
@@ -152,10 +163,14 @@ void runProgram(GLFWwindow* window)
 		view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 		glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(projection*view));
 		
+		/*
 		glBindTextureUnit(0, plaintexID);
 		glBindTextureUnit(1, mountaintexID);
 		glBindTextureUnit(2, snowtexID);
-		glBindTextureUnit(3, noisetexID);
+		*/
+		glBindTextureUnit(0, noisetexID1);
+		glBindTextureUnit(1, noisetexID2);
+		glBindTextureUnit(2, noisetexID3);
 		
 		glDrawElements(GL_TRIANGLES, heightMap.indices.size(), GL_UNSIGNED_INT, nullptr);
 		//glDrawArrays(GL_TRIANGLES, 0, 3);
@@ -171,7 +186,7 @@ void runProgram(GLFWwindow* window)
 
 void handleKeyboardInput(GLFWwindow* window)
 {
-	float cameraSpeed = 10.0f * deltaTime;
+	float cameraSpeed = 100.0f * deltaTime;
     // Use escape key for terminating the GLFW window
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
     {

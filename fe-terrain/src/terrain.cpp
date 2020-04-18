@@ -38,13 +38,15 @@ std::vector<unsigned char> noiseMap(unsigned int seed) {
 	FastNoise noise;
 	noise.SetNoiseType(FastNoise::SimplexFractal);
 	noise.SetFractalOctaves(5);
-	noise.SetFractalGain(0.5f);
-	noise.SetFrequency(0.01f);
+	noise.SetFractalGain(0.7f);
+	noise.SetFrequency(0.03f);
+	noise.SetFractalLacunarity(3.0f);
 	noise.SetSeed(seed);
 	std::vector<unsigned char> pixels;
-	for(unsigned int y=0; y<256; y++) {
-		for(unsigned int x=0; x<256; x++) {
-			unsigned char noise_val = 255*(((noise.GetNoise(x, y)+1)/4)+0.5);
+	for(unsigned int y=0; y<128; y++) {
+		for(unsigned int x=0; x<128; x++) {
+			//unsigned char noise_val = 255*((0.75*(noise.GetNoise(x, y)+1)/2)+0.25);
+			unsigned char noise_val = 255*((0.3*(noise.GetNoise(x, y)+1)/2)+0.7);
 			pixels.push_back(noise_val);
 			pixels.push_back(noise_val);
 			pixels.push_back(noise_val);
@@ -69,9 +71,14 @@ HeightMap generatePerlinNoiseMap(unsigned int width, unsigned int height, GLfloa
 	noise.SetSeed(seed);
 	std::vector<GLuint> indices;
 	for(unsigned int z=0; z<height; z++) {
-		GLfloat t = (GLfloat)z / (GLfloat)height;
+		//GLfloat t = (GLfloat)z / (GLfloat)height;
 		for(unsigned int x=0; x<width; x++) {
-			GLfloat s = (GLfloat)x / (GLfloat)width;
+			GLuint noiseNum = std::rand() % 3;
+			//odd is flip, even is not flip
+			unsigned int u_flip = std::rand();
+			unsigned int v_flip = std::rand();
+			//std::cout << u_flip << ", ";
+			//GLfloat s = (GLfloat)x / (GLfloat)width;
 			//botLeft
 			GLfloat x_coord = x*unitsize;
 			GLfloat z_coord = -(z+zoffset)*unitsize;
@@ -81,16 +88,20 @@ HeightMap generatePerlinNoiseMap(unsigned int width, unsigned int height, GLfloa
 			vertices.push_back(scalingFactor*noise_val);
 			vertices.push_back(z_coord);
 			//uv
-			vertices.push_back(0.0f);
-			vertices.push_back(0.0f);
+			vertices.push_back((0 + u_flip)%2);
+			vertices.push_back((0 + v_flip)%2);
 			//blendmap
 			std::vector<GLfloat> blendMap = gradient(noise_val);
 			vertices.push_back(blendMap.at(0));
 			vertices.push_back(blendMap.at(1));
 			vertices.push_back(blendMap.at(2));
+			/*
 			//st, aka noise texcoords
 			vertices.push_back(s);
 			vertices.push_back(t);
+			*/
+			//which noise filter
+			vertices.push_back(noiseNum);
 			
 			//botRight
 			x_coord = (x+1)*unitsize;
@@ -101,16 +112,20 @@ HeightMap generatePerlinNoiseMap(unsigned int width, unsigned int height, GLfloa
 			vertices.push_back(scalingFactor*noise_val);
 			vertices.push_back(z_coord);
 			//uv
-			vertices.push_back(1.0f);
-			vertices.push_back(0.0f);
+			vertices.push_back((1 + u_flip)%2);
+			vertices.push_back((0 + v_flip)%2);
 			//blendmap
 			blendMap = gradient(noise_val);
 			vertices.push_back(blendMap.at(0));
 			vertices.push_back(blendMap.at(1));
 			vertices.push_back(blendMap.at(2));
+			/*
 			//st
 			vertices.push_back(s+(1/width));
 			vertices.push_back(t);
+			*/
+			//which noise filter
+			vertices.push_back(noiseNum);
 			
 			//topRight
 			x_coord = (x+1)*unitsize;
@@ -121,16 +136,20 @@ HeightMap generatePerlinNoiseMap(unsigned int width, unsigned int height, GLfloa
 			vertices.push_back(scalingFactor*noise_val);
 			vertices.push_back(z_coord);
 			//uv
-			vertices.push_back(1.0f);
-			vertices.push_back(1.0f);
+			vertices.push_back((1 + u_flip)%2);
+			vertices.push_back((1 + v_flip)%2);
 			//blendmap
 			blendMap = gradient(noise_val);
 			vertices.push_back(blendMap.at(0));
 			vertices.push_back(blendMap.at(1));
 			vertices.push_back(blendMap.at(2));
+			/*
 			//st
 			vertices.push_back(s+(1/width));
 			vertices.push_back(t+(1/height));
+			*/
+			//which noise filter
+			vertices.push_back(noiseNum);
 			
 			//topLeft
 			x_coord = x*unitsize;
@@ -141,30 +160,21 @@ HeightMap generatePerlinNoiseMap(unsigned int width, unsigned int height, GLfloa
 			vertices.push_back(scalingFactor*noise_val);
 			vertices.push_back(z_coord);
 			//uv
-			vertices.push_back(0.0f);
-			vertices.push_back(1.0f);
+			vertices.push_back((0 + u_flip)%2);
+			vertices.push_back((1 + v_flip)%2);
 			//blendmap
 			blendMap = gradient(noise_val);
 			vertices.push_back(blendMap.at(0));
 			vertices.push_back(blendMap.at(1));
 			vertices.push_back(blendMap.at(2));
+			/*
 			//st
 			vertices.push_back(s);
 			vertices.push_back(t+(1/height));
-			/*
-			//rgb
-			std::cout << noise_val << "-" << gradient(noise_val) << ",  ";
-			GLfloat color = gradient(noise_val);
-			vertices.push_back(color);
-			vertices.push_back(1.0f);
-			vertices.push_back(color);
 			*/
-			/*
-			botLeft = 0
-			botRight = 1
-			topRight = 2
-			topLeft = 3
-			*/
+			//which noise filter
+			vertices.push_back(noiseNum);
+			
 			indices.push_back(4*quadNumber);
 			indices.push_back(4*quadNumber + 1);
 			indices.push_back(4*quadNumber + 2);
