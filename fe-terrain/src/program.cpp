@@ -97,19 +97,21 @@ void runProgram(GLFWwindow* window)
 									0.0f, 0.6f, 0.0f};
 	std::vector<GLuint> indices = {0, 1, 2};
 	*/
-	//xyzuvrgbst
+	//xyz uv rgb x'y'z' i
 	unsigned int vboID;
 	glGenBuffers(1, &vboID);
 	glBindBuffer(GL_ARRAY_BUFFER, vboID);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)*heightMap.vertices.size(), heightMap.vertices.data(), GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8*sizeof(GL_FLOAT)+sizeof(GL_UNSIGNED_INT), (GLvoid*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11*sizeof(GL_FLOAT)+sizeof(GL_UNSIGNED_INT), (GLvoid*)0);
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8*sizeof(GL_FLOAT)+sizeof(GL_UNSIGNED_INT), (GLvoid*)(3*sizeof(GL_FLOAT)));
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 11*sizeof(GL_FLOAT)+sizeof(GL_UNSIGNED_INT), (GLvoid*)(3*sizeof(GL_FLOAT)));
 	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8*sizeof(GL_FLOAT)+sizeof(GL_UNSIGNED_INT), (GLvoid*)(5*sizeof(GL_FLOAT)));
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 11*sizeof(GL_FLOAT)+sizeof(GL_UNSIGNED_INT), (GLvoid*)(5*sizeof(GL_FLOAT)));
 	glEnableVertexAttribArray(2);
-	glVertexAttribPointer(3, 1, GL_UNSIGNED_INT, GL_FALSE, 8*sizeof(GL_FLOAT)+sizeof(GL_UNSIGNED_INT), (GLvoid*)(8*sizeof(GL_FLOAT)));
+	glVertexAttribPointer(3, 3, GL_FLOAT, GL_TRUE, 11*sizeof(GL_FLOAT)+sizeof(GL_UNSIGNED_INT), (GLvoid*)(8*sizeof(GL_FLOAT)));
 	glEnableVertexAttribArray(3);
+	glVertexAttribPointer(4, 1, GL_UNSIGNED_INT, GL_FALSE, 11*sizeof(GL_FLOAT)+sizeof(GL_UNSIGNED_INT), (GLvoid*)(11*sizeof(GL_FLOAT)));
+	glEnableVertexAttribArray(4);
 	
 	unsigned int indexBufferID;
     glGenBuffers(1, &indexBufferID);
@@ -137,15 +139,28 @@ void runProgram(GLFWwindow* window)
 	unsigned int noisetexID3 = noiseToTexture(noiseMap(std::rand()), 128, 128);
 	
 	//lighting
+	/*
 	shader.setVec3("light.direction", -0.2f, -1.0f, -0.3f); 	
 	shader.setVec3("light.ambient",  0.2f, 0.2f, 0.2f);
 	shader.setVec3("light.diffuse",  0.5f, 0.5f, 0.5f);
 	shader.setVec3("light.specular", 1.0f, 1.0f, 1.0f); 
+	*/
 	
+	GLint light_dir_loc = shader->getUniformFromName("light.direction");
+	glUniform3fv(light_dir_loc, 1, glm::value_ptr(glm::vec3(-0.5f, -1.0f, 0.3f)));
 	
+	GLint light_ambient_loc = shader->getUniformFromName("light.ambient");
+	glUniform3fv(light_ambient_loc, 1, glm::value_ptr(glm::vec3(0.7f, 0.7f, 0.7f)));
 	
+	GLint light_diffuse_loc = shader->getUniformFromName("light.diffuse");
+	glUniform3fv(light_diffuse_loc, 1, glm::value_ptr(glm::vec3(0.5f, 0.5f, 0.5f)));
 	
+	GLint light_spec_loc = shader->getUniformFromName("light.specular");
+	glUniform3fv(light_spec_loc, 1, glm::value_ptr(glm::vec3(0.15f, 0.15f, 0.15f)));
+
 	
+	glm::mat4 model(1.0f);
+	model = glm::translate(model, glm::vec3(0.0f, 0.0f, -2.0f));
 	glm::mat4 view;
 	glm::mat4 projection = glm::perspective(glm::radians(80.0f), float(windowWidth) / float(windowHeight), 0.1f, 350.f);
     // Rendering Loop
@@ -161,7 +176,9 @@ void runProgram(GLFWwindow* window)
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;  
 		view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-		glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(projection*view));
+		glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(projection*view*model));
+		glUniform3fv(1, 1, glm::value_ptr(cameraPos));
+		glUniformMatrix4fv(2, 1, GL_FALSE, glm::value_ptr(model));
 		
 		/*
 		glBindTextureUnit(0, plaintexID);

@@ -94,6 +94,12 @@ namespace Shading
             attach(fragmentFilename);
             link();
         }
+		
+        /* Convenience function to get a uniforms ID from a string
+           containing its name */
+        GLint getUniformFromName(std::string const &uniformName) {
+            return glGetUniformLocation(this->get(), uniformName.c_str());
+        }
 
 
         /* Used for debugging shader programs (expensive to run) */
