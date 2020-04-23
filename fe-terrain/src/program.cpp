@@ -19,12 +19,12 @@
 
 
 Shading::Shader* shader;
-//MAP DIMENSIONS
-unsigned int width = 128;
-unsigned int height = 128;
+//PER GRID DIMENSIONS
+unsigned int grid_width = 128;
+unsigned int grid_height = 128;
 GLfloat unitsize = 2.0f;
 //CAMERA
-glm::vec3 cameraPos   = glm::vec3((width/2)*unitsize, 30.0f,  0.0f);
+glm::vec3 cameraPos   = glm::vec3((grid_width/2)*unitsize, 30.0f,  0.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
 float deltaTime = 0.0f;	
@@ -60,6 +60,52 @@ unsigned int noiseToTexture(std::vector<unsigned char> pixels, unsigned int widt
 	return textureID;
 }
 
+HeightMap generateMap(unsigned int width, unsigned int height, unsigned int seed) {
+	std::vector<GLfloat> vertices;
+	std::vector<unsigned int> indices;
+	std::vector<unsigned int> terraintypes = {0, 1, 1, 0, 1, 0, 0, 1, 1};
+	std::vector<GLfloat> scalingfactors = {40.0f, 10.0f};
+	assert(terraintypes.size()==width*height);
+	unsigned int quadCount = 0;
+	
+	for (unsigned int z=0; z<height; z++) {
+		for (unsigned int x=0; x<width; x++) {
+			unsigned int terraintype_index = x+(z*width);
+			HeightMap heightmap = generatePerlinNoiseMap(grid_width, grid_height, x*(grid_width+32), z*(grid_height+32), quadCount, unitsize, seed, terraintypes.at(terraintype_index));
+			quadCount = heightmap.quadNumber;
+			vertices.insert(vertices.end(), heightmap.vertices.begin(), heightmap.vertices.end());
+			indices.insert(indices.end(), heightmap.indices.begin(), heightmap.indices.end());
+			
+			
+			if (x<(width-1)) {
+				unsigned int left = terraintypes.at(terraintype_index);
+				unsigned int right = terraintypes.at(terraintype_index+1);
+				HeightMap smoothener = horizontalTerrainSmoothener(32, grid_height, x*(grid_width+32) + grid_width, z*(grid_height+32), quadCount, unitsize, seed, scalingfactors.at(left), scalingfactors.at(right));
+				quadCount = smoothener.quadNumber;
+				vertices.insert(vertices.end(), smoothener.vertices.begin(), smoothener.vertices.end());
+				indices.insert(indices.end(), smoothener.indices.begin(), smoothener.indices.end());
+			}
+			
+			
+			if (z<(height-1)) {
+				unsigned int down = terraintypes.at(terraintype_index);
+				unsigned int up = terraintypes.at(terraintype_index + width);
+				HeightMap smoothener = verticalTerrainSmoothener(grid_width, 32, x*(grid_width+32), z*(grid_height+32) + grid_height, quadCount, unitsize, seed, scalingfactors.at(down), scalingfactors.at(up));
+				quadCount = smoothener.quadNumber;
+				vertices.insert(vertices.end(), smoothener.vertices.begin(), smoothener.vertices.end());
+				indices.insert(indices.end(), smoothener.indices.begin(), smoothener.indices.end());
+			}
+			
+		}
+	}
+	HeightMap returnMap = {
+		vertices,
+		indices,
+		quadCount,
+	};
+	return returnMap;
+}
+
 void runProgram(GLFWwindow* window)
 {
 	
@@ -90,7 +136,9 @@ void runProgram(GLFWwindow* window)
     glGenVertexArrays(1, &vaoID);
     glBindVertexArray(vaoID);
 	
-	HeightMap heightMap = generatePerlinNoiseMap(width, height, unitsize, std::rand());
+	HeightMap heightMap = generateMap(3, 3, std::rand());
+
+	
 	/*
 	std::vector<GLfloat> vertices = {-0.6f, -0.6f, 0.0f,
 									0.6f, -0.6f, 0.0f,
@@ -150,13 +198,13 @@ void runProgram(GLFWwindow* window)
 	glUniform3fv(light_dir_loc, 1, glm::value_ptr(glm::vec3(-0.5f, -1.0f, 0.3f)));
 	
 	GLint light_ambient_loc = shader->getUniformFromName("light.ambient");
-	glUniform3fv(light_ambient_loc, 1, glm::value_ptr(glm::vec3(0.7f, 0.7f, 0.7f)));
+	glUniform3fv(light_ambient_loc, 1, glm::value_ptr(glm::vec3(0.8f, 0.8f, 0.8f)));
 	
 	GLint light_diffuse_loc = shader->getUniformFromName("light.diffuse");
-	glUniform3fv(light_diffuse_loc, 1, glm::value_ptr(glm::vec3(0.5f, 0.5f, 0.5f)));
+	glUniform3fv(light_diffuse_loc, 1, glm::value_ptr(glm::vec3(0.6f, 0.6f, 0.6f)));
 	
 	GLint light_spec_loc = shader->getUniformFromName("light.specular");
-	glUniform3fv(light_spec_loc, 1, glm::value_ptr(glm::vec3(0.15f, 0.15f, 0.15f)));
+	glUniform3fv(light_spec_loc, 1, glm::value_ptr(glm::vec3(0.2f, 0.2f, 0.2f)));
 
 	
 	glm::mat4 model(1.0f);

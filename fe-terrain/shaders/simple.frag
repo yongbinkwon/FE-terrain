@@ -1,7 +1,7 @@
 #version 430 core
 
 in layout(location = 0) vec2 texcoord;
-in layout(location = 1) vec3 blendMap;
+in layout(location = 1) vec3 color_in;
 flat in layout(location = 2) uint noise_selector;
 in layout(location = 3) vec3 normal;
 in layout(location = 4) vec3 frag_pos;
@@ -28,11 +28,7 @@ out vec4 color;
 
 void main()
 {
-	vec3 norm_blendMap = blendMap;
 	vec3 norm_normal = normalize(normal);
-    vec3 plaintex = vec3(0.0f, 0.4f, 0.0f);
-	vec3 mountaintex = vec3(0.45f, 0.45f, 0.45f);
-	vec3 snowtex = vec3(1.0f, 1.0f, 1.0f);
 	
 	vec3 lightDir = normalize(-light.direction);
 	float diff = max(dot(norm_normal, lightDir), 0.0);
@@ -45,21 +41,21 @@ void main()
 	
 	if(noise_selector == 0) {
 		vec3 noisetex = vec3(texture(noisetextureSampler1, texcoord));
-		vec3 objectcolor = noisetex*((plaintex*norm_blendMap.x) + (mountaintex*norm_blendMap.y) + (snowtex*norm_blendMap.z));
+		vec3 objectcolor = noisetex*color_in;
 		color = vec4(objectcolor*(light.ambient + diffuse + specular), 1.0f);
 		//color = vec4(objectcolor, 1.0f);
 		//color = vec4(noisetex, 1.0f);
 	}
 	else if(noise_selector == 1) {
 		vec3 noisetex = vec3(texture(noisetextureSampler2, texcoord));
-		vec3 objectcolor = noisetex*((plaintex*norm_blendMap.x) + (mountaintex*norm_blendMap.y) + (snowtex*norm_blendMap.z));
+		vec3 objectcolor = noisetex*color_in;
 		color = vec4(objectcolor*(light.ambient + diffuse + specular), 1.0f);
 		//color = vec4(objectcolor, 1.0f);
 		//color = vec4(noisetex, 1.0f);
 	}
 	else {
 		vec3 noisetex = vec3(texture(noisetextureSampler3, texcoord));
-		vec3 objectcolor = noisetex*((plaintex*norm_blendMap.x) + (mountaintex*norm_blendMap.y) + (snowtex*norm_blendMap.z));
+		vec3 objectcolor = noisetex*color_in;
 		color = vec4(objectcolor*(light.ambient + diffuse + specular), 1.0f);
 		//color = vec4(objectcolor, 1.0f);
 		//color = vec4(noisetex, 1.0f);
